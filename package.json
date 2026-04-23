@@ -1,0 +1,32 @@
+{
+  "name": "unc-builder",
+  "version": "1.0.0",
+  "description": "A Next.js 16 (App Router) platform for staff-to-user script injection, hardware flashing, and meta management for Zen/XIM devices. Built with TypeScript, Tailwind CSS (Industrial Black & Gold), Supabase, and Render hosting.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+     "test": "echo \"Error: no test specified\" && exit 1",
+     "dev": "next dev",
+     "build": "next build",
+     "start": "next start",
+     "lint": "next lint"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.104.0",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "autoprefixer": "^10.5.0",
+    "next": "^16.3.0-canary.2",
+    "postcss": "^8.5.10",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tailwindcss": "^4.2.4",
+    "typescript": "^6.0.3"
+  }
+}
