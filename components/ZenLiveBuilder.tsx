@@ -12,20 +12,39 @@ import { useUser } from '../components/UserContext';
   const [status, setStatus] = useState('');
   const [featureFlags, setFeatureFlags] = useState<{ [key: string]: boolean }>({});
   const [addons, setAddons] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
+  const [lockedReason, setLockedReason] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/weapons')
-      .then(res => res.json())
-      .then(data => setWeapons(data.filter((w: any) => w.platform === 'zen')));
-    fetch('/api/premium-features')
-      .then(res => res.json())
-      .then(setFeatureFlags);
-    if (user?.id) {
-      fetch(`/api/user-addons?user_id=${user.id}`)
-        .then(res => res.json())
-        .then(setAddons);
+    let cancelled = false;
+    async function fetchAll() {
+      setLoading(true);
+      const weaponsRes = await fetch('/api/weapons');
+      const weaponsData = await weaponsRes.json();
+      if (!cancelled) setWeapons(weaponsData.filter((w: any) => w.platform === 'zen'));
+      const featuresRes = await fetch('/api/premium-features');
+      const featuresData = await featuresRes.json();
+      if (!cancelled) setFeatureFlags(featuresData);
+      if (user?.id) {
+        const addonsRes = await fetch(`/api/user-addons?user_id=${user.id}`);
+        const addonsData = await addonsRes.json();
+        if (!cancelled) setAddons(addonsData);
+      }
+      setLoading(false);
     }
+    fetchAll();
+    return () => { cancelled = true; };
   }, [user]);
+
+  useEffect(() => {
+    if (!loading) {
+      const isPremium = (role === 'PREMIUM' || role === 'OWNER') && featureFlags['zen_live_tuning'];
+      const hasPro = !!addons['pro'] || role === 'OWNER';
+      if (!isPremium) setLockedReason('premium');
+      else if (!hasPro) setLockedReason('pro');
+      else setLockedReason(null);
+    }
+  }, [loading, role, featureFlags, addons]);
 
   useEffect(() => {
     if (selectedWeapon) {
@@ -61,27 +80,7 @@ import { useUser } from '../components/UserContext';
   }, [selectedWeapon, selectedCombo, tuning, weapons, combos]);
 
   // Save tuning
-  const isPremium = (role === 'PREMIUM' || role === 'OWNER') && featureFlags['zen_live_tuning'];
-  const hasPro = !!addons['pro'] || role === 'OWNER';
   const hasDevice = !!addons['device'] || role === 'OWNER';
-
-  if (!isPremium) {
-    return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Premium Only)</h1>
-        <div className="text-red-500 mb-4">Live tuning is a Premium feature. Upgrade to unlock.</div>
-      </div>
-    );
-  }
-
-  if (!hasPro) {
-    return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Pro Add-On Required)</h1>
-        <div className="text-red-500 mb-4">This feature requires the Pro Add-On. Contact the owner to upgrade.</div>
-      </div>
-    );
-  }
   const saveTuning = async () => {
     setStatus('Saving...');
     const res = await fetch('/api/tuning', {
@@ -122,6 +121,25 @@ import { useUser } from '../components/UserContext';
 
   // Example: if device add-on is required for hardware flashing, show a message or lock UI
 
+  if (loading) {
+    return <div className="p-8">Loading...</div>;
+  }
+  if (lockedReason === 'premium') {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Premium Only)</h1>
+        <div className="text-red-500 mb-4">Live tuning is a Premium feature. Upgrade to unlock.</div>
+      </div>
+    );
+  }
+  if (lockedReason === 'pro') {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Pro Add-On Required)</h1>
+        <div className="text-red-500 mb-4">This feature requires the Pro Add-On. Contact the owner to upgrade.</div>
+      </div>
+    );
+  }
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Zen Live Builder</h1>
