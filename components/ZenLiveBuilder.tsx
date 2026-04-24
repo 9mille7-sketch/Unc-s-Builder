@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useUser } from '../components/UserContext';
 
+export default function ZenLiveBuilder() {
   const { user, role } = useUser();
   const [weapons, setWeapons] = useState<any[]>([]);
   const [combos, setCombos] = useState<any[]>([]);
@@ -13,7 +14,6 @@ import { useUser } from '../components/UserContext';
   const [featureFlags, setFeatureFlags] = useState<{ [key: string]: boolean }>({});
   const [addons, setAddons] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
-  const [lockedReason, setLockedReason] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,16 +35,6 @@ import { useUser } from '../components/UserContext';
     fetchAll();
     return () => { cancelled = true; };
   }, [user]);
-
-  useEffect(() => {
-    if (!loading) {
-      const isPremium = (role === 'PREMIUM' || role === 'OWNER') && featureFlags['zen_live_tuning'];
-      const hasPro = !!addons['pro'] || role === 'OWNER';
-      if (!isPremium) setLockedReason('premium');
-      else if (!hasPro) setLockedReason('pro');
-      else setLockedReason(null);
-    }
-  }, [loading, role, featureFlags, addons]);
 
   useEffect(() => {
     if (selectedWeapon) {
@@ -97,77 +87,59 @@ import { useUser } from '../components/UserContext';
     else setStatus('Failed to save');
   };
 
+  // Gating logic for UI
   const isPremium = (role === 'PREMIUM' || role === 'OWNER') && featureFlags['zen_live_tuning'];
   const hasPro = !!addons['pro'] || role === 'OWNER';
-  const hasDevice = !!addons['device'] || role === 'OWNER';
 
-  if (!isPremium) {
-    return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Premium Only)</h1>
-        <div className="text-red-500 mb-4">Live tuning is a Premium feature. Upgrade to unlock.</div>
-      </div>
-    );
-  }
-
-  if (!hasPro) {
-    return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Pro Add-On Required)</h1>
-        <div className="text-red-500 mb-4">This feature requires the Pro Add-On. Contact the owner to upgrade.</div>
-      </div>
-    );
-  }
-
-  // Example: if device add-on is required for hardware flashing, show a message or lock UI
-
+  let content: React.ReactNode = null;
   if (loading) {
-    return <div className="p-8">Loading...</div>;
-  }
-  if (lockedReason === 'premium') {
-    return (
-      <div className="p-8">
+    content = <div>Loading...</div>;
+  } else if (!isPremium) {
+    content = (
+      <>
         <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Premium Only)</h1>
         <div className="text-red-500 mb-4">Live tuning is a Premium feature. Upgrade to unlock.</div>
-      </div>
+      </>
     );
-  }
-  if (lockedReason === 'pro') {
-    return (
-      <div className="p-8">
+  } else if (!hasPro) {
+    content = (
+      <>
         <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Pro Add-On Required)</h1>
         <div className="text-red-500 mb-4">This feature requires the Pro Add-On. Contact the owner to upgrade.</div>
-      </div>
+      </>
+    );
+  } else {
+    content = (
+      <>
+        <h1 className="text-2xl font-bold mb-4">Zen Live Builder</h1>
+        {!hasDevice && <div className="text-yellow-500 mb-4">Hardware flashing is locked. Device Add-On required.</div>}
+        <div className="flex flex-col gap-4 max-w-md">
+          <select value={selectedWeapon} onChange={e => setSelectedWeapon(e.target.value)} className="p-2 rounded border border-gold bg-black text-gold">
+            <option value="">Select Weapon</option>
+            {weapons.map((w: any) => <option key={w.id} value={w.id}>{w.name}</option>)}
+          </select>
+          <select value={selectedCombo} onChange={e => setSelectedCombo(e.target.value)} className="p-2 rounded border border-gold bg-black text-gold">
+            <option value="">Select Combo (optional)</option>
+            {combos.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <label>Vertical Recoil
+            <input type="range" min="-100" max="100" value={tuning.vertical_recoil} onChange={e => setTuning(t => ({ ...t, vertical_recoil: +e.target.value }))} className="w-full" />
+          </label>
+          <label>Horizontal Recoil
+            <input type="range" min="-100" max="100" value={tuning.horizontal_recoil} onChange={e => setTuning(t => ({ ...t, horizontal_recoil: +e.target.value }))} className="w-full" />
+          </label>
+          <label>Timing
+            <input type="range" min="0" max="100" value={tuning.timing} onChange={e => setTuning(t => ({ ...t, timing: +e.target.value }))} className="w-full" />
+          </label>
+          <textarea placeholder="Notes" value={tuning.notes} onChange={e => setTuning(t => ({ ...t, notes: e.target.value }))} className="p-2 rounded border border-gold bg-black text-gold" />
+          <button onClick={saveTuning} className="bg-gold text-graphite font-bold py-2 rounded hover:bg-yellow-400 transition">Save Tuning</button>
+          {status && <div className="text-sm opacity-70">{status}</div>}
+          <h2 className="text-lg font-bold mt-4">Generated GPC Script</h2>
+          <pre className="bg-black text-gold p-2 rounded border border-gold overflow-x-auto">{script}</pre>
+        </div>
+      </>
     );
   }
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Zen Live Builder</h1>
-      {!hasDevice && <div className="text-yellow-500 mb-4">Hardware flashing is locked. Device Add-On required.</div>}
-      <div className="flex flex-col gap-4 max-w-md">
-        <select value={selectedWeapon} onChange={e => setSelectedWeapon(e.target.value)} className="p-2 rounded border border-gold bg-black text-gold">
-          <option value="">Select Weapon</option>
-          {weapons.map((w: any) => <option key={w.id} value={w.id}>{w.name}</option>)}
-        </select>
-        <select value={selectedCombo} onChange={e => setSelectedCombo(e.target.value)} className="p-2 rounded border border-gold bg-black text-gold">
-          <option value="">Select Combo (optional)</option>
-          {combos.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <label>Vertical Recoil
-          <input type="range" min="-100" max="100" value={tuning.vertical_recoil} onChange={e => setTuning(t => ({ ...t, vertical_recoil: +e.target.value }))} className="w-full" />
-        </label>
-        <label>Horizontal Recoil
-          <input type="range" min="-100" max="100" value={tuning.horizontal_recoil} onChange={e => setTuning(t => ({ ...t, horizontal_recoil: +e.target.value }))} className="w-full" />
-        </label>
-        <label>Timing
-          <input type="range" min="0" max="100" value={tuning.timing} onChange={e => setTuning(t => ({ ...t, timing: +e.target.value }))} className="w-full" />
-        </label>
-        <textarea placeholder="Notes" value={tuning.notes} onChange={e => setTuning(t => ({ ...t, notes: e.target.value }))} className="p-2 rounded border border-gold bg-black text-gold" />
-        <button onClick={saveTuning} className="bg-gold text-graphite font-bold py-2 rounded hover:bg-yellow-400 transition">Save Tuning</button>
-        {status && <div className="text-sm opacity-70">{status}</div>}
-        <h2 className="text-lg font-bold mt-4">Generated GPC Script</h2>
-        <pre className="bg-black text-gold p-2 rounded border border-gold overflow-x-auto">{script}</pre>
-      </div>
-    </div>
-  );
+
+  return <div className="p-8">{content}</div>;
 }
