@@ -61,6 +61,27 @@ import { useUser } from '../components/UserContext';
   }, [selectedWeapon, selectedCombo, tuning, weapons, combos]);
 
   // Save tuning
+  const isPremium = (role === 'PREMIUM' || role === 'OWNER') && featureFlags['zen_live_tuning'];
+  const hasPro = !!addons['pro'] || role === 'OWNER';
+  const hasDevice = !!addons['device'] || role === 'OWNER';
+
+  if (!isPremium) {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Premium Only)</h1>
+        <div className="text-red-500 mb-4">Live tuning is a Premium feature. Upgrade to unlock.</div>
+      </div>
+    );
+  }
+
+  if (!hasPro) {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Pro Add-On Required)</h1>
+        <div className="text-red-500 mb-4">This feature requires the Pro Add-On. Contact the owner to upgrade.</div>
+      </div>
+    );
+  }
   const saveTuning = async () => {
     setStatus('Saving...');
     const res = await fetch('/api/tuning', {
