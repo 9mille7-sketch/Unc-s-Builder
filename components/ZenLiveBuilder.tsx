@@ -4,8 +4,8 @@ import { useUser } from '../components/UserContext';
 
 export default function ZenLiveBuilder() {
   const { user, role } = useUser();
-  const [weapons, setWeapons] = useState([]);
-  const [combos, setCombos] = useState([]);
+  const [weapons, setWeapons] = useState<any[]>([]);
+  const [combos, setCombos] = useState<any[]>([]);
   const [selectedWeapon, setSelectedWeapon] = useState('');
   const [selectedCombo, setSelectedCombo] = useState('');
   const [tuning, setTuning] = useState({ vertical_recoil: 0, horizontal_recoil: 0, timing: 0, notes: '' });
