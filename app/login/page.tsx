@@ -1,24 +1,45 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+"use client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Logo from '../../components/Logo';
 
 export default function Login() {
-  // Placeholder: Simulate login and role assignment
-  // In production, replace with Supabase Auth logic
-  const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
-  const role = params.get('role') || 'USER';
-  cookies().set('user_role', role);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-  // Redirect based on role
-  if (role === 'OWNER') redirect('/admin');
-  else if (role === 'STAFF') redirect('/staff');
-  else redirect('/dashboard');
+  function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (password === "Duke2026") {
+      document.cookie = `user_role=OWNER; path=/`;
+      router.replace("/admin");
+    } else {
+      document.cookie = `user_role=USER; path=/`;
+      router.replace("/dashboard");
+    }
+  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-graphite text-gold">
       <Logo />
       <h1 className="text-4xl font-bold mt-4 mb-2">Login</h1>
-      <p className="mb-8">Logging in and redirecting...</p>
+      <form className="flex flex-col gap-4 w-80" onSubmit={handleLogin}>
+        <input
+          type="password"
+          className="p-3 rounded bg-black text-gold border border-gold focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          placeholder="Enter Owner Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+        />
+        <button
+          type="submit"
+          className="bg-gold text-graphite font-bold py-2 rounded hover:bg-yellow-400 transition"
+        >
+          Login
+        </button>
+        {error && <div className="text-red-400 text-sm">{error}</div>}
+      </form>
+      <div className="mt-8 text-sm opacity-70">Use the owner password to access the Owner Panel. Any other password will log in as a regular user.</div>
     </main>
   );
 }
