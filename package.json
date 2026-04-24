@@ -7,11 +7,11 @@
     "lib": "lib"
   },
   "scripts": {
-     "test": "echo \"Error: no test specified\" && exit 1",
-     "dev": "next dev",
-     "build": "next build",
-     "start": "next start",
-     "lint": "next lint"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +19,7 @@
   "type": "module",
   "dependencies": {
     "@supabase/supabase-js": "^2.104.0",
+    "@tailwindcss/postcss": "^4.2.4",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "autoprefixer": "^10.5.0",
