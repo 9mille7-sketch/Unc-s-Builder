@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers';
 import OwnerPanel from './OwnerPanel';
 
-export default function Admin() {
-  const cookieStore = cookies();
+export default async function Admin() {
+  const cookieStore = await cookies();
   const role = cookieStore.get('user_role')?.value || 'ADMIN';
   if (role === 'OWNER') {
     return <OwnerPanel />;
