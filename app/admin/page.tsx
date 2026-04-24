@@ -1,15 +1,9 @@
 import { cookies } from 'next/headers';
 import OwnerPanel from './OwnerPanel';
 
-// Placeholder: In production, fetch user role from Supabase session or context
-function getUserRole() {
-  // Example: Read from cookie (replace with real session logic)
-  const role = cookies().get('user_role')?.value;
-  return role || 'ADMIN';
-}
-
-export default function Admin() {
-  const role = getUserRole();
+export default async function Admin() {
+  const cookieStore = cookies();
+  const role = (await cookieStore.get?.('user_role'))?.value || 'ADMIN';
   if (role === 'OWNER') {
     return <OwnerPanel />;
   }
