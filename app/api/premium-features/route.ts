@@ -7,8 +7,8 @@ export async function GET() {
   // Fetch all premium feature flags
   const { data, error } = await supabase.from('premium_features').select('*');
   if (error) return NextResponse.json({}, { status: 500 });
-  const flags = {};
-  for (const row of data || []) flags[row.key] = row.enabled;
+  const flags: Record<string, boolean> = {};
+  for (const row of (data || []) as any[]) flags[row.key] = row.enabled;
   return NextResponse.json(flags);
 }
 
