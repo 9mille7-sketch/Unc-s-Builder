@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { useUser } from '../components/UserContext';
 
-export default function ZenLiveBuilder() {
   const { user, role } = useUser();
   const [weapons, setWeapons] = useState<any[]>([]);
   const [combos, setCombos] = useState<any[]>([]);
@@ -12,6 +11,7 @@ export default function ZenLiveBuilder() {
   const [script, setScript] = useState('');
   const [status, setStatus] = useState('');
   const [featureFlags, setFeatureFlags] = useState<{ [key: string]: boolean }>({});
+  const [addons, setAddons] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch('/api/weapons')
@@ -20,7 +20,12 @@ export default function ZenLiveBuilder() {
     fetch('/api/premium-features')
       .then(res => res.json())
       .then(setFeatureFlags);
-  }, []);
+    if (user?.id) {
+      fetch(`/api/user-addons?user_id=${user.id}`)
+        .then(res => res.json())
+        .then(setAddons);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (selectedWeapon) {
@@ -73,11 +78,33 @@ export default function ZenLiveBuilder() {
   };
 
   const isPremium = (role === 'PREMIUM' || role === 'OWNER') && featureFlags['zen_live_tuning'];
+  const hasPro = !!addons['pro'] || role === 'OWNER';
+  const hasDevice = !!addons['device'] || role === 'OWNER';
+
+  if (!isPremium) {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Premium Only)</h1>
+        <div className="text-red-500 mb-4">Live tuning is a Premium feature. Upgrade to unlock.</div>
+      </div>
+    );
+  }
+
+  if (!hasPro) {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Pro Add-On Required)</h1>
+        <div className="text-red-500 mb-4">This feature requires the Pro Add-On. Contact the owner to upgrade.</div>
+      </div>
+    );
+  }
+
+  // Example: if device add-on is required for hardware flashing, show a message or lock UI
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Zen Live Builder (Premium Only)</h1>
-      {!isPremium && <div className="text-red-500 mb-4">Live tuning is a Premium feature.</div>}
+      <h1 className="text-2xl font-bold mb-4">Zen Live Builder</h1>
+      {!hasDevice && <div className="text-yellow-500 mb-4">Hardware flashing is locked. Device Add-On required.</div>}
       <div className="flex flex-col gap-4 max-w-md">
         <select value={selectedWeapon} onChange={e => setSelectedWeapon(e.target.value)} className="p-2 rounded border border-gold bg-black text-gold">
           <option value="">Select Weapon</option>
@@ -88,16 +115,16 @@ export default function ZenLiveBuilder() {
           {combos.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <label>Vertical Recoil
-          <input type="range" min="-100" max="100" value={tuning.vertical_recoil} onChange={e => setTuning(t => ({ ...t, vertical_recoil: +e.target.value }))} className="w-full" disabled={!isPremium} />
+          <input type="range" min="-100" max="100" value={tuning.vertical_recoil} onChange={e => setTuning(t => ({ ...t, vertical_recoil: +e.target.value }))} className="w-full" />
         </label>
         <label>Horizontal Recoil
-          <input type="range" min="-100" max="100" value={tuning.horizontal_recoil} onChange={e => setTuning(t => ({ ...t, horizontal_recoil: +e.target.value }))} className="w-full" disabled={!isPremium} />
+          <input type="range" min="-100" max="100" value={tuning.horizontal_recoil} onChange={e => setTuning(t => ({ ...t, horizontal_recoil: +e.target.value }))} className="w-full" />
         </label>
         <label>Timing
-          <input type="range" min="0" max="100" value={tuning.timing} onChange={e => setTuning(t => ({ ...t, timing: +e.target.value }))} className="w-full" disabled={!isPremium} />
+          <input type="range" min="0" max="100" value={tuning.timing} onChange={e => setTuning(t => ({ ...t, timing: +e.target.value }))} className="w-full" />
         </label>
-        <textarea placeholder="Notes" value={tuning.notes} onChange={e => setTuning(t => ({ ...t, notes: e.target.value }))} className="p-2 rounded border border-gold bg-black text-gold" disabled={!isPremium} />
-        <button onClick={saveTuning} className="bg-gold text-graphite font-bold py-2 rounded hover:bg-yellow-400 transition" disabled={!isPremium}>Save Tuning</button>
+        <textarea placeholder="Notes" value={tuning.notes} onChange={e => setTuning(t => ({ ...t, notes: e.target.value }))} className="p-2 rounded border border-gold bg-black text-gold" />
+        <button onClick={saveTuning} className="bg-gold text-graphite font-bold py-2 rounded hover:bg-yellow-400 transition">Save Tuning</button>
         {status && <div className="text-sm opacity-70">{status}</div>}
         <h2 className="text-lg font-bold mt-4">Generated GPC Script</h2>
         <pre className="bg-black text-gold p-2 rounded border border-gold overflow-x-auto">{script}</pre>

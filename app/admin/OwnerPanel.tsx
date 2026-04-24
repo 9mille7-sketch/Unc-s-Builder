@@ -4,6 +4,7 @@ import OwnerGPCManager from '../../components/OwnerGPCManager';
 import UserManagement from '../../components/UserManagement';
 import PromoteOwner from '../../components/PromoteOwner';
 import PremiumFeatureManager from '../../components/PremiumFeatureManager';
+import UserAddonManager from '../../components/UserAddonManager';
 
 export default function OwnerPanel() {
   return (
@@ -21,6 +22,7 @@ export default function OwnerPanel() {
       <UserManagement />
       <PromoteOwner />
       <PremiumFeatureManager />
+      <UserAddonManager />
       <OwnerGPCManager />
       <div className="mt-8 text-sm opacity-70">All features are available to the OWNER role. Use the navigation to access each section.</div>
     </div>
